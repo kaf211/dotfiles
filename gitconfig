@@ -1,0 +1,8 @@
+[user]
+	name = Kathleen Flannery
+	email = katie.flannery@hotmail.com
+[core]
+	excludesfile = /Users/kathleenflannery/.gitignore_global
+	editor = subl -n -w
+[push]
+	default = simple
