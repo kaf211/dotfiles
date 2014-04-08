@@ -1,18 +1,9 @@
 fullname=`hostname -f 2>/dev/null || hostname`
 
 # What kind of machine is this?
+machine_type=':home:python'
 case `uname` in
 	Darwin) machine_type="$machine_type:mac";;
-esac
-
-case $fullname in
-	*lilypad*)
-		machine_type="$machine_type:python:home:ruby"
-		;;
-	*dreamhost.com) ;&
-	*newdream.net)
-		machine_type="$machine_type:ndn"
-		;;
 esac
 
 # Path to your oh-my-zsh configuration.
@@ -24,16 +15,12 @@ DISABLE_AUTO_UPDATE="true" #oh-my-zsh updates
 # DISABLE_CORRECTION="true"
 
 base_plugins=(git history screen virtualenv)
-ndn_plugins=()
 python_plugins=(pip virtualenvwrapper)
 mac_plugins=(battery brew terminalapp)
 
 plugins=($base_plugins)
 if [[ $machine_type =~ ':mac' ]]; then
 	plugins+=($mac_plugins)
-fi
-if [[ $machine_type =~ ':ndn' ]]; then
-	plugins+=($ndn_plugins)
 fi
 if [[ $machine_type =~ ':python' ]]; then
 	plugins+=($python_plugins)
@@ -45,24 +32,6 @@ fpath=($HOME/lib/zsh/functions $fpath)
 ## Override things that oh-my-zsh doesn't do right ##
 # Turn off the damnable shared history
 unsetopt share_history
-
-# Make vi bindings useful (more vim; less vi)
-bindkey -v
-# Personalized viins bindings
-bindkey -M viins '^R' history-beginning-search-backward
-bindkey -M viins '^?' backward-delete-char
-bindkey -M viins '^[OH' beginning-of-line
-bindkey -M viins '^[OF' end-of-line
-bindkey -M viins '^[[3~' delete-char
-bindkey -M viins '^[[A' vi-up-line-or-history
-bindkey -M viins '^[[B' vi-down-line-or-history
-
-# Personalized vicmd bindings
-bindkey -M vicmd '^[[3~' delete-char
-bindkey -M vicmd 'k' vi-up-line-or-history
-bindkey -M vicmd 'j' vi-down-line-or-history
-bindkey -M vicmd '/' history-incremental-search-backward
-bindkey -M vicmd '?' history-incremental-search-backward
 
 # Git prompt stuff
 autoload -Uz vcs_info
@@ -79,41 +48,16 @@ precmd() {
 	vcs_info
 }
 
-# Change the prompt based on whether we're in insert or command mode.
-# TODO: This doesn't reset if you hit ^C to kill your current line.
-function zle-keymap-select {
-	ZSH_PROMPT_GLYPH="${${KEYMAP/vicmd/${ZSH_CMD_MODE_GLYPH}}/(main|viins)/${ZSH_INS_MODE_GLYPH}}"
-	zle reset-prompt
-}
-zle -N zle-keymap-select
-function zle-line-finish {
-	ZSH_PROMPT_GLYPH=$ZSH_INS_MODE_GLYPH
-}
-zle -N zle-line-finish
-ZSH_PROMPT_GLYPH=$ZSH_INS_MODE_GLYPH
-
-# Default new command lines to insert mode?
-#zle-line-init() { zle -K vicmd; }
-#zle -N zle-line-init
-#
 function git_prompt_info() {
 	echo "$vcs_info_msg_0_"
 }
 
 # Environment Variables
 export PATH=/usr/local/bin:$PATH:/usr/bin:/bin:/usr/sbin:/sbin
-export EDITOR=vim
-export VISUAL=vim
+export EDITOR=nano
+export VISUAL=subl
 export PAGER=less
 export MYSQL_PS1="\d> "
-
-# disable full ssh host completion on yakko because SLOOOOOW
-function global_ssh_hosts() {
-	case $fullname in
-		yakko*) return;;
-		*) return (${${${${(f)"$(</etc/ssh/ssh_known_hosts)"}:#[\|]*}%%\ *}%%,*});;
-	esac
-}
 
 # set PATH so it includes user's private bin, local/bin and tools
 # directories if they exist
@@ -141,12 +85,6 @@ if [[ $machine_type =~ ':python' ]]; then
 	}
 fi
 
-# Ruby things o.O
-if [[ $machine_type =~ ':ruby' ]]; then
-	source $HOME/.rvm/scripts/rvm # Maybe needs conditionals
-	PATH=$PATH:$HOME/.rvm/bin # Add RVM to PATH for scripting
-fi
-
 # Mac (and not-mac) things
 if [[ $machine_type =~ ':mac' ]]; then
 	export LSCOLORS=gxfxbEaEBxxEhEhBaDaCaD
@@ -156,44 +94,10 @@ else
 fi
 
 
-# Work paths and aliases
-if [[ $machine_type =~ ':ndn' ]]; then
-	if [ -d /ndn/dh/bin ] ; then
-		PATH=/ndn/dh/bin:"${PATH}"
-		export PATH
-	fi
-
-	alias dbc="nocorrect dbc"
-	alias reboot="/usr/local/ndn/dh/bin/reboot.pl"
-	alias rssh="ssh -l root"
-	alias servicectl="/usr/bin/sudo /dh/bin/servicectl"
-	alias sc="/usr/bin/sudo /dh/bin/servicectl"
-	alias sctl="/usr/bin/sudo /dh/bin/servicectl"
-	alias mysc="/usr/bin/sudo /usr/bin/env DH_TEMPLATE_PREFIX=/home/kylem/ndn PERLLIB=/home/kylem/ndn/perl/ /home/kylem/ndn/dh/bin/servicectl"
-	alias scdb="/usr/bin/sudo /usr/bin/env PERL5DB='BEGIN { require \"perl5db.pl\"; push @DB::typeahead, \"b 815\"; }' DH_TEMPLATE_PREFIX=/home/kylem/ndn PERLLIB=/home/kylem/ndn/perl/ perl -d /home/kylem/ndn/dh/bin/servicectl"
-	alias eperl="/opt/plack/perl/bin/perl"
-
-	function rscp { scp $1 root@$2 }
-	function rekey  { /usr/bin/sudo /dh/bin/servicectl $1:man authorizedkeys ; }
-	function rhost {
-		LOOKUP=`host $1 | grep 'has address' | awk '{print $4'}`
-		echo `host $LOOKUP | awk '{print $5}'`
-	}
-
-fi
-
 ################
 # SSH-y things #
 ################
 
-function fubar {
-	add_ndn_keys
-	ssh kylem@fubar.dreamhost.com
-}
-function yakko {
-	add_ndn_keys
-	ssh kylem@yakko.sd.dreamhost.com
-}
 SSH_ENV="$HOME/.ssh/environment"
 
 # add appropriate ssh keys to the agent
@@ -207,17 +111,6 @@ function add_personal_keys {
 			if [ $? -eq 2 ];then
 				start_agent
 			fi
-		fi
-	fi
-}
-
-function add_ndn_keys {
-	ssh-add -l | grep "ndn\.rsa" > /dev/null
-	if [ $? -ne 0 ]; then
-		ssh-add -t 32400 ~/.ssh/*-ndn.rsa # NDN IDs active for 9 hours
-		# $SSH_AUTH_SOCK broken so we start a new proper agent
-		if [ $? -eq 2 ];then
-			start_agent
 		fi
 	fi
 }
