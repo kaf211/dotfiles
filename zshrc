@@ -9,6 +9,7 @@ esac
 # Path to your oh-my-zsh configuration.
 ZSH=$HOME/.oh-my-zsh
 ZSH_THEME="kylemarsh"
+ZSH_PROMPT_GLYPH="%%" #this is just for my theme
 CASE_SENSITIVE="false"
 DISABLE_AUTO_UPDATE="true" #oh-my-zsh updates
 # DISABLE_AUTO_TITLE="true"
